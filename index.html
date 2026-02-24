@@ -1,0 +1,42 @@
+---
+layout: home
+title: z3y4d
+---
+<section class="hero">
+  <div class="container">
+    <h1 class="hero-title">z3y4d</h1>
+    <p class="hero-subtitle"><span class="prompt-char">$ </span>Breaking boxes. Writing it up.</p>
+    <p class="hero-description">Cybersecurity writeups, CTF solutions, and hacking adventures.</p>
+    <div class="hero-actions">
+      <a href="/writeups" class="btn btn-primary">./writeups</a>
+      <a href="/about" class="btn btn-outline">whoami</a>
+    </div>
+  </div>
+</section>
+
+<section class="container" style="padding-bottom: 4rem;">
+  <div class="section-header">
+    <h2 class="section-title">$ ls ./writeups/</h2>
+    <span class="section-count">{{ site.posts | size }} posts</span>
+  </div>
+
+  <div class="posts-grid">
+    {% for post in site.posts %}
+    <a class="post-card" href="{{ post.url | relative_url }}">
+      <h3 class="post-title">{{ post.title }}</h3>
+      <div class="post-meta">
+        <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %d, %Y" }}</time>
+        {% if post.platform %}<span class="badge badge-platform">{{ post.platform }}</span>{% endif %}
+        {% if post.difficulty %}<span class="badge badge-{{ post.difficulty | downcase }}">{{ post.difficulty }}</span>{% endif %}
+      </div>
+      {% if post.tags %}
+      <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+        {% for tag in post.tags limit:5 %}
+        <span class="tag">#{{ tag }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+</section>

@@ -1,0 +1,14 @@
+<header class="site-header">
+  <div class="container">
+    <nav class="nav-inner">
+      <a class="site-brand" href="{{ '/' | relative_url }}">
+        <span class="prompt">~/</span><span class="alias">z3y4d</span><span class="cursor"></span>
+      </a>
+      <ul class="site-nav">
+        <li><a href="{{ '/' | relative_url }}" {% if page.url == '/' %}class="active"{% endif %}>home</a></li>
+        <li><a href="{{ '/writeups' | relative_url }}" {% if page.url contains 'writeups' %}class="active"{% endif %}>writeups</a></li>
+        <li><a href="{{ '/about' | relative_url }}" {% if page.url contains 'about' %}class="active"{% endif %}>about</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
