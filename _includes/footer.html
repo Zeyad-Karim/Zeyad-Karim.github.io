@@ -1,0 +1,16 @@
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <span class="brand-prompt">z3y4d@kali</span><span class="brand-dollar">:~$</span>
+    </div>
+    <p class="footer-desc">Cybersecurity writeups, CTF solutions, and hacking adventures.</p>
+    <div class="footer-links">
+      {% if site.github_username %}
+      <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" class="footer-link">GitHub</a>
+      {% endif %}
+      <a href="{{ '/feed.xml' | relative_url }}" class="footer-link">RSS</a>
+      <a href="{{ '/sitemap.xml' | relative_url }}" class="footer-link">Sitemap</a>
+    </div>
+    <p class="footer-copy">&copy; {{ site.time | date: "%Y" }} z3y4d — Happy hacking 🔥</p>
+  </div>
+</footer>

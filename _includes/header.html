@@ -1,0 +1,28 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="{{ '/' | relative_url }}" class="site-brand">
+      <span class="brand-prompt">~/z3y4d</span><span class="brand-dollar"> $</span>
+    </a>
+    <nav class="site-nav" id="site-nav">
+      <a href="{{ '/' | relative_url }}" class="nav-link{% if page.url == '/' %} active{% endif %}">
+        <span class="nav-prompt">~</span> home
+      </a>
+      <a href="{{ '/writeups' | relative_url }}" class="nav-link{% if page.url contains '/writeups' %} active{% endif %}">
+        <span class="nav-prompt">~</span> writeups
+      </a>
+      <a href="{{ '/about' | relative_url }}" class="nav-link{% if page.url contains '/about' %} active{% endif %}">
+        <span class="nav-prompt">~</span> about
+      </a>
+    </nav>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<script>
+document.getElementById('nav-toggle').addEventListener('click', function() {
+  document.getElementById('site-nav').classList.toggle('open');
+  this.classList.toggle('open');
+});
+</script>

@@ -1,0 +1,30 @@
+---
+layout: default
+title: "404: Target Not Found"
+permalink: /404.html
+---
+<div class="error-page">
+  <div class="error-terminal container">
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="terminal-title">z3y4d@kali:~</span>
+      </div>
+      <div class="terminal-body">
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cmd">curl {{ page.url }}</span></p>
+        <div class="error-code">404</div>
+        <p class="error-msg">Error: Target not found.</p>
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cmd">nmap -sV 404.target</span></p>
+        <p class="terminal-output" style="color:#8b949e;">Starting Nmap... Host seems down.</p>
+        <p class="terminal-output error-detail">The page you're looking for doesn't exist or has been moved.</p>
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cursor-blink">_</span></p>
+      </div>
+    </div>
+    <div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
+      <a href="{{ '/' | relative_url }}" class="btn">← Go Home</a>
+      <a href="{{ '/writeups' | relative_url }}" class="btn btn-outline">View Writeups</a>
+    </div>
+  </div>
+</div>

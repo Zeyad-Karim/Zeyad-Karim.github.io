@@ -1,0 +1,101 @@
+---
+layout: default
+---
+<section class="hero">
+  <div class="hero-content">
+    <div class="terminal-window">
+      <div class="terminal-bar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="terminal-title">z3y4d@kali:~</span>
+      </div>
+      <div class="terminal-body">
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cmd">whoami</span></p>
+        <p class="terminal-output hero-name">z3y4d</p>
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cmd">cat tagline.txt</span></p>
+        <p class="terminal-output hero-tagline">Breaking boxes. Writing it up.</p>
+        <p class="terminal-line"><span class="prompt">z3y4d@kali:~$</span> <span class="cursor-blink">_</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-intro">
+  <div class="container">
+    <p>Welcome to my cybersecurity blog. I'm <strong class="accent">z3y4d</strong> — a security researcher and CTF player. Here I document my journey through vulnerable machines, web security labs, and capture-the-flag challenges. Every box teaches something new.</p>
+  </div>
+</section>
+
+<section class="latest-posts">
+  <div class="container">
+    <h2 class="section-title"><span class="prompt-char">$</span> latest writeups</h2>
+    <div class="post-grid">
+      {% for post in paginator.posts %}
+      <article class="post-card">
+        <div class="post-card-meta">
+          {% if post.platform %}
+          <span class="badge badge-platform">{{ post.platform }}</span>
+          {% endif %}
+          {% if post.difficulty %}
+          <span class="badge badge-{{ post.difficulty | downcase }}">{{ post.difficulty }}</span>
+          {% endif %}
+        </div>
+        <h3 class="post-card-title">
+          <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+        </h3>
+        <p class="post-card-date">{{ post.date | date: "%Y-%m-%d" }}</p>
+        {% if post.tags %}
+        <div class="post-card-tags">
+          {% for tag in post.tags %}
+          <span class="tag">#{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+
+    {% if paginator.total_pages > 1 %}
+    <div class="pagination">
+      {% if paginator.previous_page %}
+      <a href="{{ paginator.previous_page_path | relative_url }}" class="btn">&laquo; Newer</a>
+      {% endif %}
+      <span class="page-info">Page {{ paginator.page }} of {{ paginator.total_pages }}</span>
+      {% if paginator.next_page %}
+      <a href="{{ paginator.next_page_path | relative_url }}" class="btn">Older &raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="all-writeups-link">
+      <a href="{{ '/writeups' | relative_url }}" class="btn btn-outline">
+        <span class="prompt-char">$</span> ls -la writeups/
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="categories-section">
+  <div class="container">
+    <h2 class="section-title"><span class="prompt-char">$</span> platforms</h2>
+    <div class="platform-grid">
+      <a href="{{ '/writeups#htb' | relative_url }}" class="platform-card htb">
+        <span class="platform-icon">⬡</span>
+        <span class="platform-name">Hack The Box</span>
+      </a>
+      <a href="{{ '/writeups#thm' | relative_url }}" class="platform-card thm">
+        <span class="platform-icon">◈</span>
+        <span class="platform-name">TryHackMe</span>
+      </a>
+      <a href="{{ '/writeups#vulnhub' | relative_url }}" class="platform-card vulnhub">
+        <span class="platform-icon">◉</span>
+        <span class="platform-name">VulnHub</span>
+      </a>
+      <a href="{{ '/writeups#portswigger' | relative_url }}" class="platform-card portswigger">
+        <span class="platform-icon">◎</span>
+        <span class="platform-name">PortSwigger</span>
+      </a>
+    </div>
+  </div>
+</section>
