@@ -11,7 +11,7 @@ reading_time: "11 min"
 tags: [android, mobile, jadx, frida, firebase, webview, client-side]
 techniques: [static analysis, dynamic instrumentation, data exposure, component testing]
 tools: [JADX, ADB, Frida, logcat]
-disclaimer: "Performed against the Allsafe intentionally vulnerable Android application in a mobile penetration-testing lab. The credentials, Firebase URL, and challenge values are lab data."
+disclaimer: "Performed against the Allsafe intentionally vulnerable Android application in a mobile penetration-testing lab. Credentials and challenge values are lab data; live backend identifiers are redacted."
 toc_items:
   - id: "triage"
     label: "Triage and findings"
@@ -76,10 +76,10 @@ password: supersecurepassword
 The Firebase reference was also discoverable from the application resources. Appending `/.json` to the lab endpoint returned the database contents without an authenticated session:
 
 ```text
-https://allsafe-8cef0.firebaseio.com/.json
+https://<redacted-lab-project>.firebaseio.com/.json
 ```
 
-<figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/firebase-json.webp' | relative_url }}" alt="Firebase JSON response from the Allsafe lab" loading="lazy"><figcaption>Configuration and backend references in the APK led to an exposed lab database.</figcaption></figure>
+<figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/firebase-resources-redacted.jpg' | relative_url }}" alt="Redacted Firebase resource configuration from the Allsafe lab" loading="lazy"><figcaption>Configuration and backend references in the APK led to an exposed lab database. Project identifiers and keys are redacted.</figcaption></figure>
 
 <div class="callout finding"><span class="callout-label">finding</span><p>Client-side discovery is enough to find a backend, but authorization must still be enforced by the backend. Hiding a URL in an APK is not access control.</p></div>
 
