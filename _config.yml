@@ -1,9 +1,9 @@
-title: z3y4d
-description: "Cybersecurity writeups, CTF solutions, and hacking adventures."
-url: "https://Zeyad-Karim.github.io"
+title: z3y4d // security research
+description: "Offensive security, Android, Active Directory, and web security research by Zeyad Karim."
+url: "https://zeyad-karim.github.io"
 baseurl: ""
 author:
-  name: z3y4d
+  name: Zeyad Karim
   email: ""
 
 # Build settings
@@ -34,6 +34,7 @@ defaults:
       type: "posts"
     values:
       layout: "post"
+      author: "Zeyad Karim"
 
 # Exclude from build
 exclude:
@@ -43,6 +44,8 @@ exclude:
   - vendor
   - .bundle
   - .git
+  - source-pdfs
+  - tmp
 
 # Feed
 feed:

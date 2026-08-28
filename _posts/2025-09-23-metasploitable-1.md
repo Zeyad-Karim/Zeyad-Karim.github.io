@@ -1,274 +1,160 @@
 ---
 layout: post
-title: "Metasploitable 1 — Full Walkthrough"
+title: "Metasploitable 1: Mapping a Deliberately Broken Attack Surface"
 date: 2025-09-23
 platform: "VulnHub"
 difficulty: "Easy"
-categories: [vulnhub, writeup]
-tags: [linux, ftp, ssh, telnet, smtp, http, samba, mysql, postgresql, tomcat, metasploit, brute-force, file-upload, reverse-shell]
+category: "VulnHub"
+featured: true
+description: "A service-by-service walkthrough of Metasploitable 1, from discovery to multiple independent footholds and root paths."
+reading_time: "12 min"
+tags: [linux, ftp, ssh, telnet, smtp, http, samba, mysql, postgresql, tomcat]
+techniques: [credential reuse, file upload, reverse shell, service exploitation]
+tools: [Nmap, Hydra, Gobuster, Metasploit, Netcat]
+disclaimer: "Performed against Metasploitable 1, an intentionally vulnerable VulnHub training machine. All credentials, flags, and IP addresses shown are lab-only data."
+toc_items:
+  - {id: "surface", label: "The attack surface"}
+  - {id: "credential-paths", label: "Credentials and remote access"}
+  - {id: "web-path", label: "Web application path"}
+  - {id: "service-paths", label: "SMB and database paths"}
+  - {id: "takeaways", label: "Takeaways"}
 ---
 
 <div class="info-box">
-  <table>
-    <tr><td>Platform</td><td>VulnHub</td></tr>
-    <tr><td>Difficulty</td><td>Easy</td></tr>
-    <tr><td>OS</td><td>Linux (Ubuntu)</td></tr>
-    <tr><td>IP</td><td>10.0.2.8</td></tr>
-    <tr><td>Goal</td><td>Root access via multiple vectors</td></tr>
-  </table>
+<table>
+<tr><td>Target</td><td>Metasploitable 1</td></tr>
+<tr><td>OS</td><td>Ubuntu Linux</td></tr>
+<tr><td>Lab IP</td><td><code>10.0.2.8</code></td></tr>
+<tr><td>Objective</td><td>Document the exposed services and viable root paths</td></tr>
+</table>
 </div>
 
-## Overview
+## The attack surface {#surface}
 
-Metasploitable 1 is an intentionally vulnerable Linux machine packed with services running outdated software with known exploits. This walkthrough covers **9 different attack vectors** — from FTP brute-force to Tomcat deployment — making it an excellent target for practicing a wide range of exploitation techniques.
-
-**Services Discovered:**
-
-| Port | Service | Version |
-|------|---------|---------|
-| 21 | FTP | ProFTPD 1.3.1 |
-| 22 | SSH | OpenSSH 4.7p1 Debian 8ubuntu1 |
-| 23 | Telnet | Linux telnetd |
-| 25 | SMTP | Postfix smtpd |
-| 53 | DNS | domain |
-| 80 | HTTP | Apache httpd 2.2.8 (PHP/5.2.4) |
-| 139/445 | SMB | Samba smbd 3.0.20-Debian |
-| 3306 | MySQL | MySQL 5.0.51a |
-| 5432 | PostgreSQL | PostgreSQL 8.3.0 – 8.3.7 |
-| 8180 | HTTP (Tomcat) | Apache Tomcat/Coyote JSP 1.1 |
-
----
-
-## Enumeration
-
-### Network Discovery
+Metasploitable 1 is intentionally crowded with outdated services. That makes it useful as a methodology exercise: the right first move is to inventory the whole host before committing to one exploit.
 
 ```bash
 sudo arp-scan -l
-```
-
-<img width="1372" height="404" alt="arp-scan output" src="https://github.com/user-attachments/assets/e27d7f73-110e-4d79-82cd-6283a3268263" />
-
-```bash
 sudo netdiscover -i eth0 -r 10.0.2.0/24
-```
-
-<img width="1180" height="313" alt="netdiscover output" src="https://github.com/user-attachments/assets/bc7f3e6d-ea1b-4f72-b4bc-970898c2a6aa" />
-
-The first 3 IPs belong to my personal VM. The victim's IP is **`10.0.2.8`**.
-
-### Port Scanning
-
-```bash
 sudo nmap -T4 -A 10.0.2.8
 ```
 
-<img width="1166" height="1166" alt="Full nmap scan results" src="https://github.com/user-attachments/assets/f00f808c-8b55-4d75-9464-2f70bab17ad3" />
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/arp-scan.webp' | relative_url }}" alt="Local discovery output showing the Metasploitable lab host" loading="lazy"><figcaption>Discovery placed the target at 10.0.2.8 inside the private lab network.</figcaption></figure>
 
----
+| Port | Service | Version observed |
+| --- | --- | --- |
+| 21 | FTP | ProFTPD 1.3.1 |
+| 22 | SSH | OpenSSH 4.7p1, Debian 8ubuntu1 |
+| 23 | Telnet | Linux telnetd |
+| 25 | SMTP | Postfix smtpd |
+| 53 | DNS | domain service |
+| 80 | HTTP | Apache 2.2.8, PHP 5.2.4 |
+| 139/445 | SMB | Samba 3.0.20-Debian |
+| 3306 | MySQL | MySQL 5.0.51a |
+| 5432 | PostgreSQL | PostgreSQL 8.3.0–8.3.7 |
+| 8180 | HTTP | Apache Tomcat 5.5 |
 
-## Exploitation
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/nmap-services.webp' | relative_url }}" alt="Nmap service and version detection for Metasploitable 1" loading="lazy"><figcaption>The inventory exposed several independent authentication and code-execution opportunities.</figcaption></figure>
 
-### 1. FTP — ProFTPD 1.3.1 (Brute Force)
+<div class="callout finding"><span class="callout-label">finding</span><p>The host was not a single-exploit challenge. FTP, SSH, Telnet, the TikiWiki application, Samba, PostgreSQL, and Tomcat each created a separate branch in the attack graph.</p></div>
 
-Let's try to gain access via brute-force with Hydra:
+## Credentials and remote access {#credential-paths}
 
-```bash
-hydra -L /usr/share/wordlists/metasploit/unix_users.txt -P /usr/share/wordlists/metasploit/unix_passwords.txt ftp://10.0.2.8
-```
+### FTP and SSH
 
-<img width="2534" height="437" alt="Hydra brute-force FTP" src="https://github.com/user-attachments/assets/75873b68-246d-4b57-a761-40280e69c104" />
+The source notes began by testing FTP with Hydra. That enumeration revealed the accounts `msfadmin` and `service`, which became useful for remote login testing.
 
-<img width="491" height="445" alt="FTP login result" src="https://github.com/user-attachments/assets/915a6fc9-ca8f-468e-8ae5-6807e08d8414" />
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/ftp-enumeration.webp' | relative_url }}" alt="FTP enumeration against the Metasploitable lab" loading="lazy"><figcaption>FTP testing surfaced usernames worth validating against other exposed services.</figcaption></figure>
 
-We discover two valid usernames on the machine: **`msfadmin`** and **`service`** — note these for later.
+The SSH login module accepted the intentionally weak lab credential `msfadmin:msfadmin`:
 
----
-
-### 2. SSH — OpenSSH 4.7p1 (Default Credentials)
-
-Using Metasploit's SSH login scanner with the credentials we found:
-
-```
+```text
 use scanner/ssh/ssh_login
+set RHOSTS 10.0.2.8
+set USERNAME msfadmin
+set PASSWORD msfadmin
+run
 ```
 
-Set `RHOSTS` to `10.0.2.8`, and try `msfadmin:msfadmin` as credentials.
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/ssh-access.webp' | relative_url }}" alt="SSH access to the Metasploitable lab" loading="lazy"><figcaption>Credential reuse converted initial service enumeration into remote access.</figcaption></figure>
 
-<img width="2036" height="928" alt="SSH login via Metasploit — root access" src="https://github.com/user-attachments/assets/258004d0-ab5b-4389-9cc4-42981a2bee84" />
+The source writeup also records access to `/etc/shadow` and cracking results for the lab accounts. Those values are retained here only as training evidence; they are not credentials for a real system.
 
-**We're in as ROOT!**
+### Telnet
 
-With root access, I grabbed `/etc/shadow` and cracked the password hashes:
+The same credential worked through the Telnet login scanner:
 
-```
-root:$1$/avpfBJ1$x0z8w5UF9Iv./DR9E9Lid.
-
-sys:$1$fUX6BPOt$Miyc3UpOzQJqz4s5wFD9l0     =  batman
-
-klog:$1$f2ZVMS4K$R9XkI.CmLdHhdUE3X9jqP0    =  123456789
-
-msfadmin:$1$XN10Zj2c$Rt/zzCW3mLtUWA.ihZjA5/ =  msfadmin
-
-postgres:$1$Rw35ik.x$MgQgZUuO5pAoUvfJhfcYe/ =  postgres
-
-user:$1$HESu9xrH$k.o3G93DGoXIiQKkPmUgZ0    =  user
-
-service:$1$kR3ue7JZ$7GxELDupr5Ohp6cjZ3Bu//  =  service
-```
-
----
-
-### 3. Telnet — Linux telnetd (Default Credentials)
-
-```
+```text
 use auxiliary/scanner/telnet/telnet_login
+set RHOSTS 10.0.2.8
+set USERPASS_FILE credentials.txt
+run
 ```
 
-Using the same credentials: `msfadmin:msfadmin`
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/telnet-access.webp' | relative_url }}" alt="Telnet login scanner output" loading="lazy"><figcaption>Telnet provided another remote-access path using the lab account.</figcaption></figure>
 
-<img width="1204" height="994" alt="Telnet root access via Metasploit" src="https://github.com/user-attachments/assets/9bf87528-930a-468b-a0e2-96bba5504af8" />
+## Web application path {#web-path}
 
-**ROOT AGAIN!**
-
----
-
-### 4. SMTP — Postfix smtpd (User Enumeration)
-
-SMTP doesn't give us a shell directly, but we can enumerate valid users:
-
-```
-use auxiliary/scanner/smtp/smtp_enum
-```
-
-<img width="2541" height="313" alt="SMTP user enumeration" src="https://github.com/user-attachments/assets/d376a44f-e43d-45e0-be73-2f34da0f2c7c" />
-
-Good intel — useful for credential attacks against other services.
-
----
-
-### 5. HTTP — Apache 2.2.8 / TikiWiki (File Upload RCE)
-
-**Service:** `Apache httpd 2.2.8 (Ubuntu) PHP/5.2.4 with Suhosin-Patch`
-
-#### Directory Enumeration
+Gobuster identified directories on the Apache site:
 
 ```bash
-gobuster dir -u http://10.0.2.8/ -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -x php,txt,html
+gobuster dir -u http://10.0.2.8/ \
+  -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt \
+  -x php,txt,html
 ```
 
-<img width="1766" height="751" alt="Gobuster directory scan" src="https://github.com/user-attachments/assets/36075ee5-1a8f-49a2-a1dd-3ad54ed2292e" />
+The web service hosted a TikiWiki application. The source material records the default `admin:admin` credential, followed by access to a backup area with an upload form that did not validate file content.
 
-Several interesting directories found.
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/web-enumeration.webp' | relative_url }}" alt="Web enumeration of the TikiWiki application" loading="lazy"><figcaption>Directory discovery led to the vulnerable application surface.</figcaption></figure>
 
-#### TikiWiki Default Credentials
+The workflow was:
 
-The web application is **TikiWiki**. Logging in with default credentials:
-
-**`admin:admin`**
-
-<img width="975" height="345" alt="TikiWiki default credentials" src="https://github.com/user-attachments/assets/db7753e3-f9df-4f0f-a470-4679b61a3ec9" />
-
-After changing the password and logging back in, significantly more functionality becomes accessible:
-
-<img width="2559" height="1159" alt="TikiWiki authenticated dashboard" src="https://github.com/user-attachments/assets/4bb9853b-6925-4857-a69a-828336e7be82" />
-
-#### File Upload Reverse Shell
-
-Navigate to the **Backup** section — it has a file upload form with no input validation.
-
-Start a listener:
+1. Authenticate with the lab's default administrative credential.
+2. Reach the backup functionality.
+3. Upload a PHP reverse-shell payload.
+4. Listen with Netcat and request the uploaded file.
 
 ```bash
-nc -vlnp 9001
+nc -lvnp 9001
 ```
 
-<img width="714" height="136" alt="Netcat listener" src="https://github.com/user-attachments/assets/fa98f687-3dd5-423a-9d97-0c887edd7a6a" />
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/tikiwiki-upload.webp' | relative_url }}" alt="TikiWiki backup upload evidence" loading="lazy"><figcaption>An unrestricted backup upload gave the web process a path to code execution.</figcaption></figure>
 
-Upload the [PHP reverse shell payload](https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php):
+The resulting shell was useful as a foothold, but the source notes mark this branch as a privilege-escalation dead end. That is still a valuable result: not every shell is the best route to root.
 
-<img width="2046" height="496" alt="Uploading PHP reverse shell" src="https://github.com/user-attachments/assets/75290d83-a066-4a76-8977-7d7dfa6afb64" />
+## SMB and database paths {#service-paths}
 
-Trigger the shell by navigating to the uploaded file's URL:
+### Samba
 
-<img width="1271" height="97" alt="Accessing the uploaded shell" src="https://github.com/user-attachments/assets/924ce0db-72f4-4e87-b0f9-1d5ae9c4a114" />
+The SMB banner identified Samba 3.0.20-Debian. The `usermap_script` module matched the version and returned root in the source run:
 
-**Voila!**
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/samba-root.webp' | relative_url }}" alt="Samba usermap script returning root" loading="lazy"><figcaption>A version-specific Samba exploit provided a direct root path.</figcaption></figure>
 
-<img width="683" height="240" alt="Reverse shell connection received" src="https://github.com/user-attachments/assets/9002d7d9-5afb-4b2d-ac9f-e02220f1d900" />
+### MySQL
 
-> **Note:** Unable to escalate privileges from this shell — the web service user has limited permissions. Dead end for priv esc from this vector.
+MySQL was reachable on port 3306. Enumeration showed that the database service accepted the lab credentials, allowing direct inspection from the training network:
 
----
-
-### 6. SMB — Samba 3.0.20 (username map script)
-
-**Service:** `Samba smbd 3.0.20-Debian`
-
-Search in Metasploit:
-
-<img width="1615" height="856" alt="Searching Metasploit for Samba exploits" src="https://github.com/user-attachments/assets/c90ada6d-c2ff-45bf-9b42-a07721585c1a" />
-
-Run the `exploit/multi/samba/usermap_script` module:
-
-<img width="997" height="777" alt="Samba usermap_script root shell" src="https://github.com/user-attachments/assets/71ef3a95-56c7-4a1a-a4a5-57fa6acd25da" />
-
-**ROOT again!**
-
----
-
-### 7. MySQL — MySQL 5.0.51a (No Auth)
-
-Try connecting directly with no password:
-
-<img width="833" height="267" alt="MySQL auth check" src="https://github.com/user-attachments/assets/6ccf068d-506e-47af-a348-f34932abd492" />
-
-```bash
-mysql -h 10.0.2.8 -u root
+```text
+mysql -h 10.0.2.8 -u root -p
 ```
 
-<img width="2239" height="668" alt="MySQL root access" src="https://github.com/user-attachments/assets/8be94c96-e3c0-43f6-8e30-15833566bace" />
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/mysql-enumeration.webp' | relative_url }}" alt="MySQL enumeration on Metasploitable 1" loading="lazy"><figcaption>Database exposure broadened the credential and data-discovery surface.</figcaption></figure>
 
-**Done!** Full database access with no credentials required.
+### PostgreSQL
 
----
+PostgreSQL was also exposed. The source notes use Metasploit's PostgreSQL login and command-execution modules after checking the version range:
 
-### 8. PostgreSQL — 8.3.0 – 8.3.7 (Metasploit)
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/postgresql-module.webp' | relative_url }}" alt="Metasploit PostgreSQL module selection" loading="lazy"><figcaption>The PostgreSQL branch was evaluated independently from the web and SMB paths.</figcaption></figure>
 
-Search in Metasploit for PostgreSQL exploits:
+### Tomcat manager deployment
 
-<img width="1767" height="352" alt="Metasploit PostgreSQL modules" src="https://github.com/user-attachments/assets/dceb4202-6fbe-4d68-9432-4b57434ed31b" />
+Finally, Tomcat 5.5 was available on port 8180. The `exploit/multi/http/tomcat_mgr_deploy` module was the matching path in the source material and completed the exercise:
 
-Run the appropriate module:
+<figure class="evidence"><img src="{{ '/assets/writeups/metasploitable-1/tomcat-root.webp' | relative_url }}" alt="Tomcat manager deployment exploit result" loading="lazy"><figcaption>Tomcat's manager surface created another independent deployment path.</figcaption></figure>
 
-<img width="1522" height="661" alt="PostgreSQL exploitation result" src="https://github.com/user-attachments/assets/e898e896-05bb-48b5-b486-c7481771491a" />
+## Takeaways {#takeaways}
 
----
-
-### 9. Apache Tomcat 5.5 (Manager Deploy)
-
-**Service running on port 8180:**
-
-```
-8180/tcp open  http  Apache Tomcat/Coyote JSP engine 1.1
-```
-
-Search Metasploit for Tomcat 5.5 exploits:
-
-<img width="2491" height="796" alt="Metasploit Tomcat modules" src="https://github.com/user-attachments/assets/5c0d2266-22ac-4eed-bd48-f5990a5705e9" />
-
-The `exploit/multi/http/tomcat_mgr_deploy` module looks promising:
-
-<img width="1442" height="542" alt="Tomcat manager deploy exploit result" src="https://github.com/user-attachments/assets/a6d81ec7-1087-4302-9126-8c6be4942334" />
-
-**DONE AND THANK YOU!**
-
----
-
-## Lessons Learned
-
-- **Default credentials are everywhere** — always try them first. `msfadmin:msfadmin`, `admin:admin`, `postgres:postgres` all worked here.
-- **Never expose database ports externally** — MySQL and PostgreSQL should never be reachable from the network without authentication.
-- **File upload without validation = RCE** — the TikiWiki backup upload is a textbook example of insecure file upload.
-- **Old Samba = easy root** — `usermap_script` is a classic exploit. Patch your SMB services.
-- **Metasploitable exists for a reason** — it's a great lab for learning how these exploits work in practice before trying them on real-world engagements.
+- The value of Metasploitable is breadth: one host can teach discovery, credential reuse, file upload, reverse shells, SMB exploitation, database exposure, and Java application deployment.
+- Test known default credentials only inside the intended lab boundary, then document where reuse changes the attack path.
+- A failed privilege-escalation attempt is still useful evidence. Record it, pivot, and keep the attack graph honest.
+- Network-facing database and administration services should be restricted, authenticated, and patched in production environments.

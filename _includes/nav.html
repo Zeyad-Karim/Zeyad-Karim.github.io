@@ -1,5 +1,6 @@
 <ul class="site-nav">
-  <li><a href="{{ '/' | relative_url }}" {% if page.url == '/' %}class="active"{% endif %}>home</a></li>
-  <li><a href="{{ '/writeups' | relative_url }}" {% if page.url contains 'writeups' %}class="active"{% endif %}>writeups</a></li>
-  <li><a href="{{ '/about' | relative_url }}" {% if page.url contains 'about' %}class="active"{% endif %}>about</a></li>
+  <li><a href="{{ '/' | relative_url }}" {% if page.url == '/' %}class="active" aria-current="page"{% endif %}>home</a></li>
+  <li><a href="{{ '/writeups/' | relative_url }}" {% if page.url contains 'writeups' %}class="active" aria-current="page"{% endif %}>research</a></li>
+  <li><a href="{{ '/about/' | relative_url }}" {% if page.url contains 'about' %}class="active" aria-current="page"{% endif %}>about</a></li>
+  <li><a href="https://github.com/Zeyad-Karim" target="_blank" rel="noopener">github <span class="external-arrow">↗</span></a></li>
 </ul>

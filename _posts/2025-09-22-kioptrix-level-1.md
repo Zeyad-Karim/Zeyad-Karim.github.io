@@ -1,163 +1,105 @@
 ---
 layout: post
-title: "Kioptrix Level 1"
+title: "Kioptrix Level 1: Two Paths from Apache to Root"
 date: 2025-09-22
 platform: "VulnHub"
 difficulty: "Easy"
-categories: [vulnhub, writeup]
-tags: [linux, apache, samba, privesc, openfuck]
+category: "VulnHub"
+featured: true
+description: "A dual-path compromise of an intentionally vulnerable Red Hat VM through legacy mod_ssl and Samba services."
+reading_time: "8 min"
+tags: [linux, apache, mod-ssl, samba, privilege-escalation]
+techniques: [service enumeration, exploit chaining, local payload hosting]
+tools: [Nmap, SearchSploit, Metasploit, arp-scan]
+disclaimer: "Performed against Kioptrix Level 1, an intentionally vulnerable VulnHub training machine. The IP addresses and credentials shown are lab data."
+toc_items:
+  - {id: "scope-and-discovery", label: "Scope and discovery"}
+  - {id: "apache-path", label: "Apache / OpenFuck"}
+  - {id: "samba-path", label: "Samba trans2open"}
+  - {id: "takeaways", label: "Takeaways"}
 ---
 
 <div class="info-box">
-  <table>
-    <tr><td>Platform</td><td>VulnHub</td></tr>
-    <tr><td>Difficulty</td><td>Easy</td></tr>
-    <tr><td>OS</td><td>Linux (Red Hat)</td></tr>
-    <tr><td>IP</td><td>10.0.2.5</td></tr>
-    <tr><td>Goal</td><td>Root access</td></tr>
-  </table>
+<table>
+<tr><td>Target</td><td>Kioptrix Level 1</td></tr>
+<tr><td>OS</td><td>Red Hat Linux / 2.4.x kernel</td></tr>
+<tr><td>Lab IP</td><td><code>10.0.2.5</code></td></tr>
+<tr><td>Objective</td><td>Obtain root through an exposed service</td></tr>
+</table>
 </div>
 
-## Overview
+## Scope and discovery {#scope-and-discovery}
 
-Kioptrix Level 1 is a classic beginner-level VulnHub machine running a very old version of Red Hat Linux. The attack surface is wide: an outdated Apache with a vulnerable mod\_ssl, and a Samba service with a known remote exploit. This walkthrough covers two different paths to root.
+Kioptrix Level 1 is a deliberately old Linux target. The useful lesson is not simply that a legacy exploit works; it is that a broad, version-aware enumeration pass exposes more than one viable attack path.
 
----
-
-## Enumeration
-
-### Network Discovery
-
-We start by scanning the local network to identify the target. Either of the following tools will do:
+I identified the target on the local lab network with either of these discovery methods:
 
 ```bash
 sudo arp-scan -l
-```
-
-<img width="1374" height="436" alt="arp-scan output" src="https://github.com/user-attachments/assets/c3c72070-27e2-46b5-b495-84e56403ec6a" />
-
-```bash
 sudo netdiscover -i eth0 -r 10.0.2.0/24
 ```
 
-<img width="1181" height="316" alt="netdiscover output" src="https://github.com/user-attachments/assets/dfb316f9-05d0-49d0-a786-a89de26c3fe1" />
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/arp-scan.webp' | relative_url }}" alt="arp-scan discovering the Kioptrix lab host" loading="lazy"><figcaption>Local discovery identified the vulnerable VM at 10.0.2.5.</figcaption></figure>
 
-The first 3 IPs belong to my personal VM, so the victim's IP is **`10.0.2.5`**.
-
-### Port Scanning
+The service scan established the initial attack surface:
 
 ```bash
 sudo nmap -T4 -A 10.0.2.5
 ```
 
-<img width="1069" height="962" alt="Nmap scan results" src="https://github.com/user-attachments/assets/fd160d33-9fe8-4790-8f42-f8deef82b17e" />
+| Port | Service | Version observed |
+| --- | --- | --- |
+| 22 | SSH | OpenSSH 2.9p2, protocol 1.99 |
+| 80 | HTTP | Apache 1.3.20, mod_ssl 2.8.4, OpenSSL 0.9.6b |
+| 111 | RPC | rpcbind |
+| 139 | NetBIOS/SMB | Samba 2.2.1a |
+| 443 | HTTPS | Apache 1.3.20 |
 
-**Open services discovered:**
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/nmap-services.webp' | relative_url }}" alt="Nmap output listing Kioptrix services" loading="lazy"><figcaption>Version detection made the obsolete Apache and Samba services the highest-value leads.</figcaption></figure>
 
-| Port | Service | Version |
-|------|---------|---------|
-| 22 | SSH | OpenSSH 2.9p2 (protocol 1.99) |
-| 80 | HTTP | Apache httpd 1.3.20 (Red-Hat/Linux) mod_ssl/2.8.4 OpenSSL/0.9.6b |
-| 111 | rpcbind | RPC #100000 |
-| 139 | netbios-ssn | Samba smbd |
-| 443 | ssl/https | Apache 1.3.20 |
+<div class="callout finding"><span class="callout-label">finding</span><p>SSH was left aside because the source material did not include valid credentials. The exposed HTTP/TLS and SMB services provided unauthenticated paths instead.</p></div>
 
----
+## Apache / OpenFuck {#apache-path}
 
-## Exploitation
-
-### Service Analysis
-
-Before jumping in, let's check each service for known vulnerabilities.
-
-**1) SSH — OpenSSH 2.9p2 (protocol 1.99)**
-
-References: [Exploit-DB](https://www.exploit-db.com/exploits/21402) | [Rapid7](https://www.rapid7.com/db/modules/exploit/multi/ssh/sshexec/)
-
-This requires valid credentials to exploit, so let's park it and move on to easier targets.
-
----
-
-### Method 1: Apache mod_ssl / OpenFuck (Port 80/443)
-
-**Service:** `Apache httpd 1.3.20 — mod_ssl/2.8.4 OpenSSL/0.9.6b`
-
-Search for known exploits:
+The Apache banner matched a known mod_ssl vulnerability. I searched the local exploit index rather than guessing from the product name:
 
 ```bash
 searchsploit apache 1.3.20
 ```
 
-<img width="2536" height="736" alt="searchsploit results for apache 1.3.20" src="https://github.com/user-attachments/assets/c37ca505-8837-431c-8b82-770834b45805" />
-
-The scan confirms this version is vulnerable to **OpenFuckV2**. We copy the exploit code, compile it, and run it against the target.
-
-The kernel version is visible from the nmap scan: `Linux 2.4.X` on Red Hat.
-
-#### Running the Exploit
-
-```bash
-./z
-```
-
-<img width="452" height="247" alt="OpenFuck exploit usage" src="https://github.com/user-attachments/assets/754a7419-f28c-4827-bc94-44076c8b2299" />
+The matching OpenFuckV2 exploit was compiled and launched using the target profile and lab IP:
 
 ```bash
 ./z 0x6b 10.0.2.5 -c 10
 ```
 
-**We're In!**
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/openfuck-usage.webp' | relative_url }}" alt="OpenFuck exploit usage screen" loading="lazy"><figcaption>The exploit accepted the Apache target profile and returned a shell.</figcaption></figure>
 
-<img width="1057" height="857" alt="Initial shell as apache" src="https://github.com/user-attachments/assets/c81df113-d22e-4970-a2e1-edb8009b7de1" />
+The first shell was an **Apache** shell, not root. That distinction matters: the exploit delivered code execution, but the privilege boundary was still intact.
 
-<img width="227" height="158" alt="Shell confirmation" src="https://github.com/user-attachments/assets/f8237c3b-a243-4bcc-a2b6-62181f4dbddc" />
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/apache-shell.webp' | relative_url }}" alt="Initial Apache shell on Kioptrix" loading="lazy"><figcaption>Initial access landed in the web-service account.</figcaption></figure>
 
-We have a shell, but notice we're running as `apache` (non-root). The exploit partially fails because the machine can't reach the internet to download a required file: `ptrace-kmod.c`.
+The exploit then attempted to fetch `ptrace-kmod.c`. Because the isolated VM could not reach the internet, that dependency was not available:
 
-<img width="1053" height="274" alt="Download error for ptrace-kmod.c" src="https://github.com/user-attachments/assets/88c3ae72-3e30-44de-9a87-73de6f53d546" />
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/ptrace-download-error.webp' | relative_url }}" alt="OpenFuck failing to download ptrace-kmod.c" loading="lazy"><figcaption>Network isolation interrupted the exploit's dependency download.</figcaption></figure>
 
-#### Fix: Serve the File Locally
+To keep the lab isolated, I downloaded the source on the Kali VM, served it locally with Apache, changed the exploit source to use the local URL, recompiled, and ran the same target command again. The second run completed the local kernel-exploit stage and returned a root shell.
 
-The exploit needs `ptrace-kmod.c` — which is a local kernel exploit. Since the target can't reach the internet, I:
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/openfuck-root.webp' | relative_url }}" alt="Root shell after the OpenFuck path" loading="lazy"><figcaption>Root access after supplying the dependency from the local lab network.</figcaption></figure>
 
-1. Downloaded `ptrace-kmod.c` to my Kali machine
-2. Started a local Apache server
-3. Modified the exploit source to point to my local machine instead of the original URL
-4. Recompiled and re-ran the exploit
+<div class="callout root"><span class="callout-label">root</span><p>The Apache path demonstrates a practical exploit-chain detail: remote code execution and privilege escalation may fail for environmental reasons even when the vulnerability is real.</p></div>
 
-```bash
-./z 0x6b 10.0.2.5 -c 10
-```
+## Samba trans2open {#samba-path}
 
-<img width="1167" height="1065" alt="Root shell via OpenFuck" src="https://github.com/user-attachments/assets/a8aff65f-6c58-43e9-a5c6-e5918b0a49b9" />
+The same scan exposed SMB on port 139. I first confirmed the version with the Metasploit auxiliary scanner, identifying **Samba 2.2.1a**, then searched for a version-specific module.
 
-**ROOT! 🥳**
+The Rapid7 `linux/samba/trans2open` module provided a second path to root. In the source run, the module returned a root shell directly:
 
----
+<figure class="evidence"><img src="{{ '/assets/writeups/kioptrix-level-1/samba-root.webp' | relative_url }}" alt="Samba trans2open returning a root shell" loading="lazy"><figcaption>The trans2open path reached root without relying on the Apache foothold.</figcaption></figure>
 
-### Method 2: Samba trans2open (Port 139)
+## Takeaways {#takeaways}
 
-**Service:** `netbios-ssn — Samba smbd`
-
-First, detect the exact Samba version using Metasploit's auxiliary scanner:
-
-<img width="1543" height="585" alt="Samba version detection via Metasploit" src="https://github.com/user-attachments/assets/cf10263c-9636-43c4-bb69-347d05c4ddfd" />
-
-**Version identified: Samba 2.2.1a**
-
-References: [Exploit-DB](https://www.exploit-db.com/exploits/10) | [Rapid7](https://www.rapid7.com/db/modules/exploit/linux/samba/trans2open/)
-
-Using the Metasploit `trans2open` module:
-
-<img width="1287" height="1031" alt="Samba trans2open root shell" src="https://github.com/user-attachments/assets/9a33de23-b7e6-4b8d-a4a4-0291f72a3892" />
-
-**And We're In as root!**
-
----
-
-## Lessons Learned
-
-- **Always enumerate all services** — running multiple outdated services creates multiple attack paths.
-- **mod_ssl/OpenSSL version matters** — even a minor version difference can mean the difference between vulnerable and not.
-- **Network isolation is key for exploit payloads** — when an exploit downloads a dependency, serve it locally when the target is isolated.
-- **Samba is a classic vector** on old Linux boxes — `trans2open` is a well-known, reliable exploit for Samba 2.x.
+- Version enumeration is only useful when it changes the next decision. Here, it narrowed both Apache and Samba to known exploit families.
+- The Apache path separated initial access from privilege escalation and exposed a dependency failure caused by network isolation.
+- Keeping payloads and dependencies on the local lab network preserved the test boundary while making the exploit reproducible.
+- A second exposed service can be the cleaner path. SMB was independently exploitable, so the first foothold was not required.
