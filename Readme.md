@@ -1,83 +1,36 @@
-# z3y4d — Cybersecurity Blog
+# z3y4d / security research
 
-Personal blog for publishing CTF writeups, vulnerable machine walkthroughs, and security research. Hosted on GitHub Pages at **https://Zeyad-Karim.github.io**.
+Personal cybersecurity portfolio and Jekyll/GitHub Pages research notebook for [Zeyad Karim](https://github.com/Zeyad-Karim).
 
-Built with [Jekyll](https://jekyllrb.com/) using a custom dark hacker-aesthetic theme.
+The site documents hands-on work in intentionally vulnerable machines, security academy labs, Android testing, reverse engineering, and Active Directory. It is designed to keep the reasoning, commands, and evidence together in readable web-native articles.
 
----
+## Local development
 
-## Adding a New Writeup
-
-1. Create a new Markdown file in `_posts/` using the naming convention:
-   ```
-   YYYY-MM-DD-machine-name.md
-   ```
-
-2. Add the following front matter at the top of the file:
-   ```yaml
-   ---
-   layout: post
-   title: "Machine Name"
-   date: YYYY-MM-DD
-   platform: "Hack The Box"   # Hack The Box | TryHackMe | VulnHub | PortSwigger | Other
-   difficulty: "Medium"        # Easy | Medium | Hard | Insane
-   tags: [linux, privesc, web]
-   image: /assets/img/banner.png  # optional
-   ---
-   ```
-
-3. Write your writeup in Markdown below the front matter. Recommended sections:
-   - **Enumeration** — initial recon and service discovery
-   - **Foothold** — gaining initial access
-   - **Privilege Escalation** — path to root/SYSTEM
-   - **Flags** — user and root hashes
-   - **Lessons Learned** — key takeaways
-
-4. Commit and push — GitHub Pages builds and deploys automatically.
-
----
-
-## Local Development
-
-### Prerequisites
-
-- Ruby (≥ 2.7)
-- Bundler (`gem install bundler`)
-
-### Setup
+The project targets GitHub Pages with the `github-pages` gem:
 
 ```bash
 bundle install
 bundle exec jekyll serve
 ```
 
-The site will be available at `http://localhost:4000`.
+Open `http://localhost:4000` after the server starts.
 
----
+## Structure
 
-## Site Structure
-
-```
-├── _config.yml          # Jekyll configuration
-├── _layouts/            # Page templates (default, home, post, page)
-├── _includes/           # Reusable HTML partials (header, footer, head, nav)
-├── _posts/              # Writeup posts (Markdown)
-├── _sass/               # SCSS stylesheets
-├── assets/              # CSS, images, and other static files
-├── index.html           # Home page with latest posts
-├── writeups.md          # All writeups grouped by platform
-├── about.md             # Bio, skills, and social links
-└── 404.html             # Custom 404 page
+```text
+_posts/                  Native Markdown writeups
+_layouts/                Page, home, and article templates
+_includes/               Shared head, header, navigation, and footer
+_sass/main.scss          Site design system and responsive layout
+assets/writeups/<slug>/  Extracted and optimized evidence images
+assets/js/writeups.js    Client-side research library filters
+source-pdfs/             Local source material, ignored by Git
 ```
 
----
+## Research library
 
-## Platforms Covered
+The `/writeups/` page includes client-side search plus platform, category, and difficulty filters. Articles carry structured metadata for platform, category, techniques, tools, reading time, and tags.
 
-| Platform | Description |
-|----------|-------------|
-| Hack The Box | Retired and active machine writeups |
-| TryHackMe | Guided room walkthroughs |
-| VulnHub | Offline vulnerable VM writeups |
-| PortSwigger | Web security lab solutions |
-| Other | CTF challenges and misc research |
+## Scope and disclosure
+
+All published exercises are framed as intentionally vulnerable machines, CTFs, security academy labs, or authorized training environments. The local `source-pdfs/` directory is ignored by Git. Potentially live or user-specific testing artifacts from the source material are omitted from the public articles.

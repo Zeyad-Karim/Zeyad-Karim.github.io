@@ -1,11 +1,11 @@
 ---
 layout: default
 ---
-<div class="page-header">
-  <h1 class="page-title">{{ page.title }}</h1>
-  {% if page.description %}
-  <p class="page-desc">{{ page.description }}</p>
-  {% endif %}
+<div class="container page-wrap">
+  <div class="page-header">
+    <div class="eyebrow">/ {{ page.title | downcase }}</div>
+    <h1 class="page-title">{{ page.title }}</h1>
+    {% if page.description %}<p class="page-desc">{{ page.description }}</p>{% endif %}
+  </div>
+  {{ content }}
 </div>
-
-{{ content }}

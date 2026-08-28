@@ -1,0 +1,5 @@
+source-pdfs/
+vendor/
+.bundle/
+.sass-cache/
+tmp/

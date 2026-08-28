@@ -1,51 +1,31 @@
 ---
-layout: default
+layout: page
 title: About
+description: "A concise profile of Zeyad Karim's hands-on cybersecurity focus and research practice."
 permalink: /about/
 ---
 
-<div class="about-page">
-  <div class="about-header">
-    <h1 class="about-title">whoami</h1>
-    <p class="about-subtitle">$ cat about.txt</p>
+<div class="about-grid">
+  <div class="about-intro">
+    <p><strong>z3y4d</strong> is Zeyad Karim's public notebook for learning offensive security through controlled, reproducible practice.</p>
+    <p>The work here focuses on understanding how systems fail: enumerate the surface, trace the trust boundary, validate the finding, and write down the evidence. The archive spans vulnerable Linux machines, web-security labs, Android applications, reverse engineering, and Active Directory.</p>
+
+    <h2>Focus areas</h2>
+    <div class="skills-grid">
+      <div class="skill-item">Web &amp; API security</div><div class="skill-item">Active Directory</div><div class="skill-item">Android pentesting</div><div class="skill-item">Reverse engineering</div><div class="skill-item">DFIR fundamentals</div><div class="skill-item">Security automation</div>
+    </div>
+
+    <h2>Working principles</h2>
+    <ul>
+      <li>Keep testing inside an intentionally vulnerable, CTF, academy, or otherwise authorized environment.</li>
+      <li>Prefer evidence and clear attack paths over tool lists.</li>
+      <li>Separate what the source material proves from what remains an open question.</li>
+    </ul>
+
+    <div class="social-links"><a href="https://github.com/Zeyad-Karim" target="_blank" rel="noopener">github ↗</a><a href="{{ '/writeups/' | relative_url }}">research library →</a></div>
   </div>
-
-  <p>
-    Hey — I'm <strong>z3y4d</strong> (Zeyad), a cybersecurity enthusiast focused on penetration testing, CTF challenges, and learning by breaking things in a controlled environment.
-  </p>
-
-  <p>
-    This blog documents my journey through vulnerable machines, CTF competitions, and security research. Every writeup is a lesson learned — in enumeration, exploitation, or just persistence.
-  </p>
-
-  <h2>Skills &amp; Interests</h2>
-
-  <div class="skills-grid">
-    <div class="skill-item"><span class="skill-icon">▸</span> Network Penetration Testing</div>
-    <div class="skill-item"><span class="skill-icon">▸</span> Web Application Security</div>
-    <div class="skill-item"><span class="skill-icon">▸</span> Linux Privilege Escalation</div>
-    <div class="skill-item"><span class="skill-icon">▸</span> CTF Competitions</div>
-    <div class="skill-item"><span class="skill-icon">▸</span> Vulnerability Research</div>
-    <div class="skill-item"><span class="skill-icon">▸</span> Exploit Development</div>
-  </div>
-
-  <h2>Platforms</h2>
-
-  <p>You'll find writeups covering machines and challenges from:</p>
-  <ul>
-    <li><strong>VulnHub</strong> — offline vulnerable VMs</li>
-    <li><strong>Hack The Box</strong> — online lab platform</li>
-    <li><strong>TryHackMe</strong> — guided learning rooms</li>
-    <li><strong>PortSwigger Web Security Academy</strong> — web security labs</li>
-  </ul>
-
-  <h2>Tools</h2>
-
-  <p>Primary toolset includes: Kali Linux, Nmap, Metasploit, Burp Suite, Gobuster, Hydra, John the Ripper, and custom scripts.</p>
-
-  <h2>Contact</h2>
-
-  <div class="social-links">
-    <a href="https://github.com/Zeyad-Karim" target="_blank" rel="noopener">GitHub</a>
-  </div>
+  <aside class="about-aside">
+    <h2>profile.txt</h2>
+    <dl><dt>alias</dt><dd>z3y4d</dd><dt>practice</dt><dd>offensive security<br>security research</dd><dt>toolbox</dt><dd>Kali · Nmap · Burp<br>Metasploit · Frida · JADX</dd><dt>publishing</dt><dd>Jekyll / GitHub Pages</dd></dl>
+  </aside>
 </div>

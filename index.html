@@ -1,42 +1,62 @@
 ---
 layout: home
-title: z3y4d
+title: z3y4d / security research
+description: "Zeyad Karim's offensive security research notebook covering web, Android, Active Directory, reverse engineering, and DFIR."
 ---
-<section class="hero">
-  <div class="container">
-    <h1 class="hero-title">z3y4d</h1>
-    <p class="hero-subtitle"><span class="prompt-char">$ </span>Breaking boxes. Writing it up.</p>
-    <p class="hero-description">Cybersecurity writeups, CTF solutions, and hacking adventures.</p>
-    <div class="hero-actions">
-      <a href="/writeups" class="btn btn-primary">./writeups</a>
-      <a href="/about" class="btn btn-outline">whoami</a>
+<div class="home-page">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <div class="terminal-label">z3y4d@security:~$</div>
+        <h1 class="hero-title">Zeyad <span class="accent">Karim</span></h1>
+        <p class="hero-role">Offensive Security / Security Research</p>
+        <p class="hero-description">A field notebook for breaking down vulnerable systems, tracing attack paths, and turning hands-on labs into clear, reproducible research.</p>
+        <div class="hero-actions">
+          <a href="{{ '/writeups/' | relative_url }}" class="btn btn-primary">explore research <span>→</span></a>
+          <a href="{{ '/about/' | relative_url }}" class="btn btn-outline">about me</a>
+          <a href="https://github.com/Zeyad-Karim" target="_blank" rel="noopener" class="btn btn-outline">github ↗</a>
+        </div>
+      </div>
+      <aside class="hero-panel" aria-label="Current focus areas">
+        <div class="panel-top"><span>focus_areas.yml</span><span>active</span></div>
+        <ul class="focus-list">
+          <li>Web &amp; API Security</li><li>Active Directory</li><li>Android Security</li><li>Reverse Engineering</li><li>DFIR &amp; Automation</li>
+        </ul>
+      </aside>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="container" style="padding-bottom: 4rem;">
-  <div class="section-header">
-    <h2 class="section-title">$ ls ./writeups/</h2>
-    <span class="section-count">{{ site.posts | size }} posts</span>
-  </div>
+  <section class="container" aria-label="Portfolio stats">
+    <div class="stats-strip">
+      <div class="stat"><span class="stat-value">{{ site.posts | size }}</span><span class="stat-label">research notes</span></div>
+      <div class="stat"><span class="stat-value">{% assign platforms = site.posts | map: "platform" | uniq %}{{ platforms | size }}</span><span class="stat-label">platforms</span></div>
+      <div class="stat"><span class="stat-value">{% assign categories = site.posts | map: "category" | uniq %}{{ categories | size }}</span><span class="stat-label">focus areas</span></div>
+    </div>
+  </section>
 
-  <div class="posts-grid">
-    {% for post in site.posts %}
-    <a class="post-card" href="{{ post.url | relative_url }}">
-      <h3 class="post-title">{{ post.title }}</h3>
-      <div class="post-meta">
-        <time class="post-date" datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%b %d, %Y" }}</time>
-        {% if post.platform %}<span class="badge badge-platform">{{ post.platform }}</span>{% endif %}
-        {% if post.difficulty %}<span class="badge badge-{{ post.difficulty | downcase }}">{{ post.difficulty }}</span>{% endif %}
-      </div>
-      {% if post.tags %}
-      <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
-        {% for tag in post.tags limit:5 %}
-        <span class="tag">#{{ tag }}</span>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </a>
-    {% endfor %}
-  </div>
-</section>
+  <section class="container home-section">
+    <div class="section-head"><h2>Featured research</h2><a href="{{ '/writeups/' | relative_url }}">view all notes →</a></div>
+    <div class="research-grid">
+      {% assign featured = site.posts | where: "featured", true %}
+      {% for post in featured limit:3 %}
+      <a class="research-card" href="{{ post.url | relative_url }}"><span class="card-kicker">{{ post.category }} / {{ post.difficulty }}</span><h3>{{ post.title }}</h3><p>{{ post.description }}</p><div class="card-footer">{% for tag in post.tags limit:3 %}<span class="tag">#{{ tag }}</span>{% endfor %}</div></a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="container home-section">
+    <div class="section-head"><h2>Latest notes</h2><a href="{{ '/writeups/' | relative_url }}">research library →</a></div>
+    <div class="research-grid">
+      {% for post in site.posts limit:3 %}
+      <a class="research-card" href="{{ post.url | relative_url }}"><span class="card-kicker">{{ post.platform }} / {{ post.date | date: "%b %d, %Y" }}</span><h3>{{ post.title }}</h3><p>{{ post.description }}</p><div class="card-footer">{% for tag in post.tags limit:3 %}<span class="tag">#{{ tag }}</span>{% endfor %}</div></a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="container home-section">
+    <div class="section-head"><h2>Areas of practice</h2></div>
+    <div class="expertise-grid">
+      <div class="expertise-item"><span>01</span><strong>Web &amp; API security</strong></div><div class="expertise-item"><span>02</span><strong>Active Directory paths</strong></div><div class="expertise-item"><span>03</span><strong>Android &amp; mobile testing</strong></div><div class="expertise-item"><span>04</span><strong>Reverse engineering</strong></div><div class="expertise-item"><span>05</span><strong>DFIR investigations</strong></div><div class="expertise-item"><span>06</span><strong>Security automation</strong></div>
+    </div>
+  </section>
+</div>
