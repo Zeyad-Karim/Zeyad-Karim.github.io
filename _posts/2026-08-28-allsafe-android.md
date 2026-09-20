@@ -12,7 +12,7 @@ reading_time: "24 min"
 tags: [android, mobile, jadx, adb, frida, firebase, webview, rootbeer]
 techniques: [static analysis, dynamic instrumentation, local storage review, IPC testing, traffic interception]
 tools: [JADX, ADB, logcat, Frida, Burp Suite]
-disclaimer: "This assessment covers the intentionally vulnerable Allsafe training application in an authorized lab. The screenshots and results come from my preserved lab report; the APK is not stored in this repository, so this rewrite is not presented as a fresh retest. Lab credentials and challenge values are included only where they explain the technique, while backend identifiers and active-looking configuration remain redacted."
+disclaimer: "This assessment was performed against the intentionally vulnerable Allsafe Android application in an authorized training environment. Credentials, endpoints, and challenge values shown in this article belong to the lab. Backend identifiers and active-looking configuration have been redacted."
 toc_items:
   - id: "assessment-overview"
     label: "Assessment overview"
@@ -46,7 +46,7 @@ toc_items:
     label: "Conclusion"
 ---
 
-<div class="info-box"><table><tr><td>Application</td><td><code>infosecadventures.allsafe</code></td></tr><tr><td>Objective</td><td>Assess common Android security failures from discovery through validation</td></tr><tr><td>Approach</td><td>JADX review, ADB, logcat, Frida, and intercepted traffic</td></tr><tr><td>Evidence basis</td><td>Preserved 18-page lab report; no fresh APK retest in this rewrite</td></tr></table></div>
+<div class="info-box"><table><tr><td>Application</td><td><code>infosecadventures.allsafe</code></td></tr><tr><td>Objective</td><td>Assess common Android security failures from discovery through validation</td></tr><tr><td>Approach</td><td>JADX review, ADB, logcat, Frida, and intercepted traffic</td></tr><tr><td>Assessment type</td><td>Hands-on Android penetration testing lab</td></tr></table></div>
 
 ## Assessment overview {#assessment-overview}
 
@@ -63,13 +63,13 @@ My workflow combined four perspectives:
 3. **Platform testing:** use ADB to inspect app-private lab data and invoke an exported component directly.
 4. **Dynamic instrumentation:** hook selected Java methods with Frida to test whether client-side controls survive runtime modification.
 
-This writeup reports only behavior preserved in the original assessment evidence. Where the challenge description suggested an alternative technique, such as brute-forcing the PIN or patching the APK, I label it as an alternative rather than claiming I performed it.
+During the lab, I focused on the techniques I actually used. Where the application suggested an alternative approach, such as brute-forcing the PIN or patching the APK, I identified it separately instead of presenting it as a path I performed.
 
 <div class="callout finding"><span class="callout-label">TL;DR</span><p>The recurring weakness was misplaced trust in the client. Values embedded in the APK were recoverable, local controls were mutable, an exported receiver accepted untrusted input, and a WebView processed content with dangerous capabilities. Server-side authorization, strict component boundaries, safe query construction, and minimal client-side secrets would remove most of the practical risk.</p></div>
 
 ## Findings at a glance {#findings-at-a-glance}
 
-| # | Finding | Evidence-backed result | Primary fix |
+| # | Finding | Validated result | Primary fix |
 | --- | --- | --- | --- |
 | 1 | Insecure logging | A submitted secret appeared in process-scoped logcat output | Never log secrets; strip or sanitize production logs |
 | 2 | Hardcoded credentials | Static analysis recovered credentials and a development credential path | Keep authentication secrets server-side and rotate exposed values |
@@ -116,7 +116,7 @@ password: supersecurepassword
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/hardcoded-soap-credentials.webp' | relative_url }}" alt="JADX data showing the embedded Allsafe lab username and password" loading="lazy"><figcaption>The first credential pair was recoverable directly from application data.</figcaption></figure>
 
-The same handler also loaded a resource named `dev_env`. Following that reference into `resources.arsc/res/values/strings.xml` revealed a second development credential embedded in a URL. I am intentionally not republishing the full value or host: the original evidence established the finding, and an active-looking endpoint adds no educational value.
+The same handler also loaded a resource named `dev_env`. Following that reference into `resources.arsc/res/values/strings.xml` revealed a second development credential embedded in a URL. I have redacted the full development value and host because publishing an active-looking endpoint adds no technical value; the relevant point is that the credential and request configuration were packaged in the client.
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/hardcoded-dev-resource-flow.webp' | relative_url }}" alt="JADX code loading the dev_env string resource for an HTTP request" loading="lazy"><figcaption>The request builder retrieved its development endpoint from a packaged string resource.</figcaption></figure>
 
@@ -195,7 +195,7 @@ private final boolean checkPin(String pin) {
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/pin-check-base64-comparison.webp' | relative_url }}" alt="Decompiled Allsafe checkPin method comparing input with a Base64-decoded constant" loading="lazy"><figcaption>The authorization decision and its secret were both present in the client.</figcaption></figure>
 
-Decoding `NDg2Mw==` gives `4863`. Entering that value produced the success message preserved in the report.
+Decoding `NDg2Mw==` gives `4863`. Entering `4863` satisfied the PIN check and triggered the success message.
 
 ```bash
 printf 'NDg2Mw==' | base64 --decode
@@ -262,7 +262,7 @@ Java.perform(function () {
 });
 ```
 
-The preserved terminal output shows the hook firing repeatedly after the application started.
+The terminal output confirmed that the hook intercepted the calls after the application started.
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/flag-secure-frida-output.webp' | relative_url }}" alt="Frida output reporting that FLAG_SECURE was bypassed in Allsafe" loading="lazy"><figcaption>The runtime hook observed and modified calls that applied screenshot protection.</figcaption></figure>
 
@@ -299,7 +299,7 @@ The application displayed a notification containing my supplied text, demonstrat
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/exported-receiver-notification.webp' | relative_url }}" alt="Allsafe notification displaying attacker-supplied Compromised text" loading="lazy"><figcaption>The explicit broadcast produced a notification with caller-controlled content.</figcaption></figure>
 
-The network path also deserves attention: allowing an external caller to choose `server` can turn the application into a confused deputy that makes requests using its own network permissions and execution context. The preserved evidence proves control of the extras and notification; it does not establish access to an otherwise unreachable production service.
+The network path also deserves attention: allowing an external caller to choose `server` can turn the application into a confused deputy that makes requests using its own network permissions and execution context. My test confirmed control over the three extras and the resulting notification; it did not establish access to an otherwise unreachable production service.
 
 **Impact.** Depending on the receiver's privileges and reachable network, abuse could create misleading notifications, disclose note content to an attacker-selected host, or trigger unintended application behavior.
 
@@ -339,7 +339,7 @@ The contents of the device's hosts file appeared inside the WebView.
 
 ## 11. Certificate pinning bypass {#certificate-pinning}
 
-The pinning challenge required the HTTPS request to become visible to an intercepting proxy. The report used the public **Universal Android SSL Pinning Bypass with Frida** project by [`@pcipolloni`](https://codeshare.frida.re/@pcipolloni/universal-android-ssl-pinning-bypass-with-frida/).
+The pinning challenge required the HTTPS request to become visible to an intercepting proxy. I used the public **Universal Android SSL Pinning Bypass with Frida** project by [`@pcipolloni`](https://codeshare.frida.re/@pcipolloni/universal-android-ssl-pinning-bypass-with-frida/).
 
 A CodeShare invocation for this package is:
 
@@ -351,7 +351,7 @@ frida -U \
 
 After attaching the hook and sending the challenge request, the proxy captured an HTTPS request to the lab's `httpbin.org` target.
 
-<figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/certificate-pinning-proxy-intercept.webp' | relative_url }}" alt="Intercepting proxy showing the Allsafe HTTPS request after the pinning bypass" loading="lazy"><figcaption>The preserved proxy view shows the request becoming interceptable during the lab.</figcaption></figure>
+<figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/certificate-pinning-proxy-intercept.webp' | relative_url }}" alt="Intercepting proxy showing the Allsafe HTTPS request after the pinning bypass" loading="lazy"><figcaption>The proxy captured the request after I applied the runtime pinning bypass.</figcaption></figure>
 
 This result does not mean certificate pinning is useless. Pinning can protect against a compromised or mistakenly trusted CA and can raise the cost of interception. It does mean that pinning code inside an attacker-controlled client is bypassable through hooking or patching. OWASP's [pinning guidance](https://mas.owasp.org/MASTG/knowledge/android/MASVS-NETWORK/MASTG-KNOW-0015/) likewise treats it as hardening rather than an unbreakable boundary.
 
@@ -361,7 +361,7 @@ This result does not mean certificate pinning is useless. Pinning can protect ag
 
 ## 12. Weak cryptography and runtime instrumentation {#weak-cryptography}
 
-The final challenge asked me to observe cryptographic operations rather than only reading decompiled code. The report used the public **Intercept Android APK Crypto Operations** CodeShare project by [`@fadeevab`](https://codeshare.frida.re/@fadeevab/intercept-android-apk-crypto-operations/), which hooks Java cryptography APIs and prints operation details.
+The final challenge asked me to observe cryptographic operations rather than only reading decompiled code. I used the public **Intercept Android APK Crypto Operations** CodeShare project by [`@fadeevab`](https://codeshare.frida.re/@fadeevab/intercept-android-apk-crypto-operations/), which hooks Java cryptography APIs and prints operation details.
 
 The corresponding CodeShare invocation is:
 
@@ -371,7 +371,7 @@ frida -U \
   -f infosecadventures.allsafe
 ```
 
-The preserved output identified key material and the transformation `AES/CBC/PKCS5Padding` while the application was running.
+The Frida output exposed the key material and the `AES/CBC/PKCS5Padding` transformation while the application was running.
 
 <figure class="evidence"><img src="{{ '/assets/writeups/allsafe-android/crypto-frida-key-cipher.webp' | relative_url }}" alt="Frida crypto hook output showing Allsafe key material and AES CBC PKCS5Padding metadata" loading="lazy"><figcaption>Runtime instrumentation observed the application's key material and cipher configuration.</figcaption></figure>
 
@@ -399,4 +399,4 @@ The defensive lesson is equally consistent:
 
 ### Future testing {#future-testing}
 
-If the exact APK becomes available again, the next pass should be a clearly labeled retest: record the APK hash and Android version, verify each finding on a clean emulator, inspect the actual SQL construction and WebView settings, test Firebase read **and** write rules without altering real data, enumerate every exported component, and identify the precise pinning and crypto call sites before applying generic hooks. Those steps would turn this evidence-backed reconstruction into a version-specific verification report.
+If I extend this assessment, I would enumerate the remaining exported components, trace the WebView configuration and SQL construction more deeply, test Firebase read and write rules without altering real data, and compare additional static findings with their runtime behavior. I would also identify the precise pinning and cryptographic call sites before applying generic hooks so each bypass targets the application's actual implementation.
