@@ -8,6 +8,7 @@ difficulty: "Medium"
 category: "Android"
 featured: true
 description: "A hands-on assessment of the intentionally vulnerable Allsafe APK, moving from static analysis and local data exposure to component abuse, WebView attacks, TLS interception, and runtime instrumentation."
+image: "/assets/writeups/allsafe-android/allsafe-logo.jpg"
 reading_time: "24 min"
 tags: [android, mobile, jadx, adb, frida, firebase, webview, rootbeer]
 techniques: [static analysis, dynamic instrumentation, local storage review, IPC testing, traffic interception]
@@ -45,6 +46,11 @@ toc_items:
   - id: "conclusion"
     label: "Conclusion"
 ---
+
+<figure class="evidence">
+  <img src="{{ '/assets/writeups/allsafe-android/allsafe-logo.jpg' | relative_url }}" alt="Allsafe intentionally vulnerable Android application logo" width="1024" height="1024">
+  <figcaption>Allsafe project logo. Source: <a href="https://github.com/t0thkr1s/allsafe-android">t0thkr1s/allsafe-android</a>.</figcaption>
+</figure>
 
 <div class="info-box"><table><tr><td>Application</td><td><code>infosecadventures.allsafe</code></td></tr><tr><td>Objective</td><td>Assess common Android security failures from discovery through validation</td></tr><tr><td>Approach</td><td>JADX review, ADB, logcat, Frida, and intercepted traffic</td></tr><tr><td>Assessment type</td><td>Hands-on Android penetration testing lab</td></tr></table></div>
 
